@@ -295,9 +295,9 @@ TLPM_SENS_FLAG_HAS_TEMP = 0x0100  # Temperature sensor included
 class TLPM:
     def __init__(self):
         if sizeof(c_voidp) == 4:
-			self.dll = cdll.LoadLibrary("TLPM_32.dll")
+            self.dll = cdll.LoadLibrary("\\src\\Thorlabs\\TLPM_32.dll")
         else:
-			self.dll = cdll.LoadLibrary("TLPM_64.dll")
+            self.dll = cdll.LoadLibrary("\\src\\Thorlabs\\TLPM_64.dll")
 
         self.devSession = c_long()
         self.devSession.value = 0
