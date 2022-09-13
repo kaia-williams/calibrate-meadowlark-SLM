@@ -1,4 +1,4 @@
-from ..Thorlabs.TLPM import TLPM
+from Thorlabs.TLPM import TLPM
 from ctypes import c_uint32, byref, create_string_buffer, c_bool, c_char_p, c_int
 from time import sleep
 

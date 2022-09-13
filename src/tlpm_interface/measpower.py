@@ -1,4 +1,4 @@
-from ..Thorlabs.TLPM import TLPM
+from Thorlabs.TLPM import TLPM
 from ctypes import (
     byref,
     c_double,
