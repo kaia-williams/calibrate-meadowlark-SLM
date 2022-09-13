@@ -1,3 +1,4 @@
-from .pwrmeter_openclose import find_power_meter
+from .seekopen import find_power_meter
+from .measpower import measure_power_instant
 
-__all__ = ["find_power_meter"]
+__all__ = ["find_power_meter", "measure_power_instant", "measure_power_average"]
