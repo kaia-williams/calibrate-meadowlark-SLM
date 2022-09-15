@@ -55,9 +55,6 @@ def run_calibration() -> None:
     # same as image data; slm methods expect a memory pointer
     WFCDataLoc = WFCData.ctypes.data_as(POINTER(c_ubyte))
 
-    # create an array to hold the intensities recorded by the power meter
-    dataIntensities: List[float] = []
-
     # start the SLM blank, we are using RGB images
     isEightBit = False
     RGBbool: bool = True
@@ -88,8 +85,13 @@ def run_calibration() -> None:
     PixelPerStripe: int = 8
     avg_pwr: int = 0
 
+    regional_fn = ""
+
     for region in range(numRegions):
         print(f"Region: {region}")
+
+        # create an array to hold the intensities recorded by the power meter
+        localDataToWrite = pd.DataFrame(columns=["Gray", "Intensity"])
 
         for gray in range(numDataPoints):
             print(f"Gray Value: {gray}")  # , end ="\r")
@@ -138,11 +140,15 @@ def run_calibration() -> None:
                 power_meter, measPointsToAverage=points_to_average
             )
             print(f"Average power: {avg_pwr}")
-            dataIntensities.append(avg_pwr)
+            pd.concat([localDataToWrite, [gray, avg_pwr]], ignore_index=True)
 
-    print("Completed calibration. Writing data...")
+        regional_fn = f"Raw {region}.csv"
 
-    # need to create a dataframe to hold the data and print to CSV
+        print(f"Writing region {region} data to: {regional_fn}...", end="")
+        localDataToWrite.to_csv(regional_fn, header=False)
+        print("written.")
+
+    print("Completed calibration.")
 
     power_meter.close()
 
