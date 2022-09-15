@@ -1,10 +1,12 @@
 from Thorlabs.TLPM import TLPM
-from tlpm_interface import *
+import tlpm_interface
+from ctypes import POINTER, c_ubyte
 from meadowlark_tools.MeadowlarkInterface import SLM_Interface
 import numpy
 from typing import List
 from time import sleep
 import pandas as pd
+
 
 def run_calibration() -> None:
 
@@ -13,8 +15,8 @@ def run_calibration() -> None:
     print("Start.")
 
     # find and create a power meter instance
-    power_meter: TLPM = find_power_meter(logging=True)
-       
+    power_meter: TLPM = tlpm_interface.find_power_meter(logging=True)
+
     # The number of data points we will use in the calibration is 256 (8 bits)
     numDataPoints: int = 256
 
@@ -23,6 +25,8 @@ def run_calibration() -> None:
     numRegions: int = 1
 
     slmInstance = SLM_Interface()
+
+    # libSLM, libImage, SLMsuccess = SLM_Interface.load_libs()
 
     # this should all get functionalized, but for now
     # is a bastard combination of my stuff and Meadowlark stuff
@@ -38,66 +42,107 @@ def run_calibration() -> None:
         imVolume = 50
 
     # Create an array to hold the image data
-    imageData = numpy.empty([imVolume], dtype=numpy.unit8, order="C")
+    blankData = numpy.empty([imVolume], dtype=numpy.uint8, order="C")
+    gratingData = numpy.empty([imVolume], dtype=numpy.uint8, order="C")
+
+    # The meadowlark methods anticipate getting pointers to the location of the
+    # empty arrays used to hold the image and grating data
+    blankDataLoc = blankData.ctypes.data_as(POINTER(c_ubyte))
+    gratingDataLoc = gratingData.ctypes.data_as(POINTER(c_ubyte))
 
     # Create a blank vector to hold the wavefront correction
-    WFC = numpy.empty([imVolume], dtype=numpy.uint8, order="C")
+    WFCData = numpy.empty([imVolume], dtype=numpy.uint8, order="C")
+    # same as image data; slm methods expect a memory pointer
+    WFCDataLoc = WFCData.ctypes.data_as(POINTER(c_ubyte))
 
     # create an array to hold the intensities recorded by the power meter
     dataIntensities: List[float] = []
 
     # start the SLM blank, we are using RGB images
     isEightBit = False
-    RGB: bool = True
+    RGBbool: bool = True
     vert: bool = True
 
-    SLM_Interface.libImage.Generate_Solid(
-        imageData, WFC, slmInstance.SLMwidth.value, SLMheight, SLMdepth, 0, RGB
+    slmInstance.libImage.Generate_Solid(
+        blankDataLoc,
+        WFCDataLoc,
+        SLMwidth,
+        SLMheight,
+        SLMdepth,
+        0,
+        RGBbool,
     )
-    SLM_Interface.libImage.Write_image(imageData, isEightBit)
 
-    # load diffraction patterns, and record the 1st order intensity
+    # note that this method is a member of libSLM, not libImage
+    slmInstance.libSLM.Write_image(blankDataLoc, isEightBit)
 
-    PixelValueOne, PixelValueTwo: int = 0 
+    PixelValueOne: int = 0
+    PixelValueTwo: int = 0
 
     # use a reference graylevel of 0 for the 1920x1152 and 255 for the 1920x1200
-    if (SLMheight == 1152):
-        PixelValueOne = 0; 
+    if SLMheight == 1152:
+        PixelValueOne = 0
     else:
-        PixelValueOne = 255;
+        PixelValueOne = 255
 
     PixelPerStripe: int = 8
     avg_pwr: int = 0
 
-    for region in range(numRegions): 
+    for region in range(numRegions):
         print(f"Region: {region}")
 
         for gray in range(numDataPoints):
-            print(f"Gray Value: {gray}")#, end ="\r")
+            print(f"Gray Value: {gray}")  # , end ="\r")
 
             # the variable graylevel increments from 0 - 255 for the 1920x1152, and decrements from 255 to 0 for the 1920x1200
-            if (SLMheight == 1152):
-                PixelValueTwo = gray;
+            if SLMheight == 1152:
+                PixelValueTwo = gray
             else:
-                PixelValueTwo = 255 - gray;
+                PixelValueTwo = 255 - gray
 
-            SLM_Interface.libimage.Generate_Stripe(imageData, WFC, SLMwidth, SLMheight, SLMdepth, PixelValueOne, PixelValueTwo, PixelPerStripe, vert, RGB)
+            slmInstance.libImage.Generate_Stripe(
+                gratingDataLoc,
+                WFCDataLoc,
+                SLMwidth,
+                SLMheight,
+                SLMdepth,
+                PixelValueOne,
+                PixelValueTwo,
+                PixelPerStripe,
+                vert,
+                RGBbool,
+            )
 
-            SLM_Interface.libimage.Mask_Image(imageData, SLMwidth, SLMheight, SLMdepth, region, numRegions, RGB)
+            slmInstance.libImage.Mask_Image(
+                gratingDataLoc,
+                SLMwidth,
+                SLMheight,
+                SLMdepth,
+                region,
+                numRegions,
+                RGBbool,
+            )
 
-            SLM_Interface.libimage.Write_image(imageData, isEightBit)
+            # note that this method is a member of libSLM, not libImage
+            slmInstance.libSLM.Write_image(gratingDataLoc, isEightBit)
 
             # sleep for 100 ms to let the SLM settle into the pattern
             sleep(0.1)
 
-            #measure power meter values
-            avg_pwr = measure_power_average(power_meter, measPointsToAverage=points_to_average)
+            # measure power meter values
+            # for this example, we will be interfacing with the thorlabs
+            # interface to measure the average power
+            # from the first power meter connected to the computer
+
+            avg_pwr = tlpm_interface.measure_power_average(
+                power_meter, measPointsToAverage=points_to_average
+            )
             print(f"Average power: {avg_pwr}")
             dataIntensities.append(avg_pwr)
 
     print("Completed calibration. Writing data...")
 
-    #need to create a dataframe to hold the data and print to CSV
+    # need to create a dataframe to hold the data and print to CSV
 
     power_meter.close()
 
