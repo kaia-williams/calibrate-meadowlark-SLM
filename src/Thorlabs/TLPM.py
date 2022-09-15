@@ -20,6 +20,8 @@ from ctypes import (
     Structure,
 )
 
+# flake8: noqa
+
 _VI_ERROR = -2147483647 - 1
 VI_ON = 1
 VI_OFF = 0
