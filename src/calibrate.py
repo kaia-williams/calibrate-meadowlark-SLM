@@ -3,9 +3,9 @@ import tlpm_interface
 from ctypes import POINTER, c_ubyte
 from meadowlark_tools.MeadowlarkInterface import SLM_Interface
 import numpy
-from typing import List
 from time import sleep
 import pandas as pd
+from os import path
 
 
 def run_calibration() -> None:
@@ -91,7 +91,9 @@ def run_calibration() -> None:
         print(f"Region: {region}")
 
         # create an array to hold the intensities recorded by the power meter
-        localDataToWrite = pd.DataFrame(columns=["Gray", "Intensity"])
+        localDataToWrite = pd.DataFrame(columns=["Intensity"])
+        localGray = []
+        localIntensity = []
 
         for gray in range(numDataPoints):
             print(f"Gray Value: {gray}")  # , end ="\r")
@@ -136,17 +138,25 @@ def run_calibration() -> None:
             # interface to measure the average power
             # from the first power meter connected to the computer
 
-            avg_pwr = tlpm_interface.measure_power_average(
+            avg_pwr: float = tlpm_interface.measure_power_average(
                 power_meter, measPointsToAverage=points_to_average
             )
-            print(f"Average power: {avg_pwr}")
-            pd.concat([localDataToWrite, [gray, avg_pwr]], ignore_index=True)
 
-        regional_fn = f"Raw {region}.csv"
+            if avg_pwr == None:
+                print("No data returned from power meter.")
+            else:
+                print(f"Average power: {avg_pwr}")
 
-        print(f"Writing region {region} data to: {regional_fn}...", end="")
+            localGray.append(gray)
+            localIntensity.append(avg_pwr)
+
+        regional_fn = path.join("output_files", f"Raw {region}.csv")
+
+        print(f"Writing region {region} data to: {regional_fn}... ", end="")
+        # localDataToWrite["Gray"] = localGray
+        localDataToWrite["Intensity"] = localIntensity
         localDataToWrite.to_csv(regional_fn, header=False)
-        print("written.")
+        print(" written.")
 
     print("Completed calibration.")
 
