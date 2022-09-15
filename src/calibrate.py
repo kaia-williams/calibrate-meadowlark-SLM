@@ -150,7 +150,7 @@ def run_calibration() -> None:
             localGray.append(gray)
             localIntensity.append(avg_pwr)
 
-        regional_fn = path.join("output_files", f"Raw {region}.csv")
+        regional_fn = path.join("output_files", f"Raw{region}.csv")
 
         print(f"Writing region {region} data to: {regional_fn}... ", end="")
         # localDataToWrite["Gray"] = localGray
