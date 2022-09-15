@@ -1,25 +1,16 @@
-# Template Repository: Python
+# Meadowlark SLM Calibration in Python
 
-Use this repository as a template for creating new Python-based repositories.
+This repo can be used to generate a .csv file for the Meadowlark SLMs. By default, a ThorLabs power meter is used to generate the intenisites required for calibration, but other devices can be inserted as neccesary. 
 
-## Development
+## Installation
+To use this software, clone the repository onto your local machine. I'm using [poetry](https://python-poetry.org/) for package management; if you choose to do so as well, simply navigate to your repository and type `poetry install` to get your packages all in order. This software only requires numpy and pandas, so it should work with most default scientific python installs anyway.
 
-Make sure you have [Python prerequisites](https://www.notion.so/fathomradiant/Python-Development-8d35a7b285c34dd984556a4fcd6f6346)
-set up first.
+## Usage
 
-To automatically run checks on changes as you try to commit them:
-```
-pre-commit install
-```
+Run the `__init__.py` file located in the `src` directory. The bulk of the script is located in the `run_calibration()` method within `calibrate.py`. If you'd like to use a power meter other than the ThorLabs models supported by the script, adjust `calibrate.py` beginning in line 141 and remove the `tlpm_interface` call in line 18.
 
-### Run tests
+Bundled within the repo is Thorlabs [example code](https://www.thorlabs.com/software_pages/viewsoftwarepage.cfm?code=OPM) they've provided for their power meters (`src/Thorlabs`) and the Meadowlark manual (located in the `docs` directory)
 
-```
-poetry run tox
-```
+## Acknowledgements
 
-### Run linters
-
-```
-poetry run tox -e lint
-```
+This software relies heavily on a python template written by [Rudyard Richter](https://github.com/rudyardrichter), and the `run_calibration()` method is based heavily on the C++ code provided by Meadowlark to calibrate their SLMs. 
