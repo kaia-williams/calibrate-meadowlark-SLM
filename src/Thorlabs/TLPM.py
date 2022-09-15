@@ -294,10 +294,18 @@ TLPM_SENS_FLAG_HAS_TEMP = 0x0100  # Temperature sensor included
 
 class TLPM:
     def __init__(self):
-        if sizeof(c_voidp) == 4:
-            self.dll = cdll.LoadLibrary("\\src\\Thorlabs\\TLPM_32.dll")
-        else:
-            self.dll = cdll.LoadLibrary("\\src\\Thorlabs\\TLPM_64.dll")
+
+        srcdir = os.path.join("src", "Thorlabs")
+
+        try:
+            if sizeof(c_voidp) == 4:
+                self.dll = cdll.LoadLibrary(os.path.join(srcdir, "TLPM_32.dll"))
+            else:
+                self.dll = cdll.LoadLibrary(os.path.join(srcdir, "TLPM_64.dll"))
+        except FileNotFoundError as er:
+            workdir = os.getcwd()
+            print(f"Libs not found in working directory: {workdir}")
+            raise er
 
         self.devSession = c_long()
         self.devSession.value = 0
