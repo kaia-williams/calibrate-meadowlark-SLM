@@ -1,11 +1,13 @@
 [tool.poetry]
-name = "template_python"
+name = "meadowlark_calibration"
 version = "0.1.0"
 description = ""
-authors = ["Rudyard Richter <richter3141@gmail.com>"]
+authors = ["Kaia Williams <kaia.j.williams@gmail.com>", "Rudyard Richter <richter3141@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+numpy = "^1.23.3"
+pandas = "^1.4.4"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"

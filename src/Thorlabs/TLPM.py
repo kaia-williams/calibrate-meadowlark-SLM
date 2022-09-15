@@ -2,23 +2,16 @@ import os
 from ctypes import (
     cdll,
     c_long,
-    c_uint32,
-    c_uint16,
-    c_uint8,
     byref,
     create_string_buffer,
-    c_bool,
-    c_char,
     c_char_p,
     c_int,
-    c_int16,
-    c_int8,
-    c_double,
-    c_float,
     sizeof,
     c_voidp,
-    Structure,
 )
+
+# type: ignore
+# flake8: noqa
 
 _VI_ERROR = -2147483647 - 1
 VI_ON = 1
@@ -294,10 +287,18 @@ TLPM_SENS_FLAG_HAS_TEMP = 0x0100  # Temperature sensor included
 
 class TLPM:
     def __init__(self):
-        if sizeof(c_voidp) == 4:
-            self.dll = cdll.LoadLibrary("\\src\\Thorlabs\\TLPM_32.dll")
-        else:
-            self.dll = cdll.LoadLibrary("\\src\\Thorlabs\\TLPM_64.dll")
+
+        srcdir = os.path.join("src", "Thorlabs")
+
+        try:
+            if sizeof(c_voidp) == 4:
+                self.dll = cdll.LoadLibrary(os.path.join(srcdir, "TLPM_32.dll"))
+            else:
+                self.dll = cdll.LoadLibrary(os.path.join(srcdir, "TLPM_64.dll"))
+        except FileNotFoundError as er:
+            workdir = os.getcwd()
+            print(f"Libs not found in working directory: {workdir}")
+            raise er
 
         self.devSession = c_long()
         self.devSession.value = 0
