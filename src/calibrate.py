@@ -7,6 +7,10 @@ from time import sleep
 import pandas as pd
 from os import path
 
+# Revised 16 September 2022
+# Kaia Williams, kaia.j.williams@gmail.com
+# See github for licensing details and usage information:
+# github.com/kaia-williams/calibrate-meadowlark-SLM
 
 def run_calibration() -> None:
 
